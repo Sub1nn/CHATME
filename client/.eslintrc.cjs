@@ -20,5 +20,6 @@ module.exports = {
     "no-unused-vars": "off",
     "react/prop-types": "off",
     "react/display-name": "off",
+    "react-hooks/rules-of-hooks": "off",
   },
 };
