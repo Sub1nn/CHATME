@@ -15,11 +15,12 @@ module.exports = {
     "react/jsx-no-target-blank": "off",
     "react-refresh/only-export-components": [
       "warn",
-      { allowConstantExport: true },
+      { allowConstantExport: true, allowNamedExport: true },
     ],
     "no-unused-vars": "off",
     "react/prop-types": "off",
     "react/display-name": "off",
     "react-hooks/rules-of-hooks": "off",
+    "react/jsx-key": "off",
   },
 };
