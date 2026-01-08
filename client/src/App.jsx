@@ -1,3 +1,22 @@
+/**
+ * App.jsx
+ *
+ * Root router for the React client.
+ *
+ * Responsibilities:
+ *  - Bootstrap the auth session on first mount (cookie-based session via /user/me)
+ *  - Show a full-page loader while auth state is being resolved
+ *  - Define routing for:
+ *      - authenticated user pages (wrapped with SocketProvider)
+ *      - public login page (only accessible when NOT logged in)
+ *      - admin pages (currently routed directly; access control may be handled inside pages)
+ *      - catch-all NotFound route
+ *
+ * Notes:
+ *  - Page components are lazy-loaded to keep the initial bundle smaller.
+ *  - ProtectRoute is used as a route guard to allow/redirect based on auth state.
+ */
+
 import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -54,6 +73,10 @@ const App = () => {
    * On first mount, fetch current session user (cookie-based auth).
    * If successful -> store user in Redux.
    * If not -> mark user as not authenticated (important for route guard logic).
+   *
+   * Important:
+   * - `withCredentials: true` is required so the browser sends cookies to the server
+   *   (especially when client/server are on different ports).
    */
   useEffect(() => {
     axios
@@ -86,7 +109,6 @@ const App = () => {
             <Route path="/chat/:chatId" element={<Chat />} />
             <Route path="/groups" element={<Groups />} />
           </Route>
-
           {/**
            * Public route:
            * Login should only be accessible when NOT logged in.
@@ -100,14 +122,17 @@ const App = () => {
               </ProtectRoute>
             }
           />
-
-          {/* Admin routes (currently not guarded here; access control handled elsewhere) */}
+          /** * Admin routes: * These routes render admin pages. * * NOTE: *
+          They are not wrapped in ProtectRoute in this file. * If you rely on
+          admin-only access, ensure: * - admin token checks happen inside the
+          admin pages/hooks, OR * - you wrap these routes with a dedicated admin
+          ProtectRoute. * TODO: Consider adding a dedicated admin route guard
+          for these paths. */
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/admin/users" element={<UserManagement />} />
           <Route path="/admin/chats" element={<ChatManagement />} />
           <Route path="/admin/messages" element={<MessagesManagement />} />
-
           {/* Catch-all route for unknown URLs */}
           <Route path="*" element={<NotFound />} />
         </Routes>
