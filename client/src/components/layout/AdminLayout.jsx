@@ -1,3 +1,15 @@
+/**
+ * AdminLayout.jsx
+ *
+ * Shared layout wrapper for all admin pages.
+ *
+ * Responsibilities:
+ *  - Enforce admin-only access (redirect non-admin users)
+ *  - Provide a persistent sidebar for admin navigation
+ *  - Handle responsive layout (drawer on mobile, sidebar on desktop)
+ *  - Wrap admin pages with a consistent structure and styling
+ */
+
 import {
   Close as CloseIcon,
   Dashboard as DashboardIcon,
@@ -22,6 +34,10 @@ import { grayColor, matBlack } from "../../constants/color";
 import { useDispatch, useSelector } from "react-redux";
 import { adminLogout } from "../../redux/thunks/admin";
 
+/**
+ * Styled Link component used for sidebar navigation items.
+ * Adds padding, rounded corners, and hover behavior.
+ */
 const Link = styled(LinkComponent)`
   text-decoration: none;
   border-radius: 2rem;
@@ -32,6 +48,10 @@ const Link = styled(LinkComponent)`
   }
 `;
 
+/**
+ * Configuration for admin sidebar navigation.
+ * Each entry maps a route to a label and icon.
+ */
 const adminTabs = [
   {
     name: "Dashboard",
@@ -55,20 +75,32 @@ const adminTabs = [
   },
 ];
 
+/**
+ * Sidebar component rendered in both desktop and mobile layouts.
+ *
+ * Props:
+ *  - w: width of the sidebar (used mainly for mobile drawer)
+ */
 const Sidebar = ({ w = "100%" }) => {
   const location = useLocation();
   const dispatch = useDispatch();
 
+  /**
+   * Logs out the admin user.
+   * This clears admin auth state and tokens via Redux thunk.
+   */
   const logoutHandler = () => {
     dispatch(adminLogout());
   };
 
   return (
     <Stack width={w} direction={"column"} p={"3rem"} spacing={"3rem"}>
+      {/* Admin panel title */}
       <Typography variant="h5" textTransform={"uppercase"}>
-        Chattu
+        CHATME
       </Typography>
 
+      {/* Navigation links */}
       <Stack spacing={"1rem"}>
         {adminTabs.map((tab) => (
           <Link
@@ -84,16 +116,15 @@ const Sidebar = ({ w = "100%" }) => {
           >
             <Stack direction={"row"} alignItems={"center"} spacing={"1rem"}>
               {tab.icon}
-
               <Typography>{tab.name}</Typography>
             </Stack>
           </Link>
         ))}
 
+        {/* Logout action */}
         <Link onClick={logoutHandler}>
           <Stack direction={"row"} alignItems={"center"} spacing={"1rem"}>
             <ExitToAppIcon />
-
             <Typography>Logout</Typography>
           </Stack>
         </Link>
@@ -102,19 +133,30 @@ const Sidebar = ({ w = "100%" }) => {
   );
 };
 
+/**
+ * AdminLayout
+ *
+ * Wraps admin pages and ensures only authenticated admins can access them.
+ *
+ * Props:
+ *  - children: admin page content
+ */
 const AdminLayout = ({ children }) => {
+  // Admin authentication state
   const { isAdmin } = useSelector((state) => state.auth);
 
+  // Controls mobile sidebar drawer visibility
   const [isMobile, setIsMobile] = useState(false);
 
   const handleMobile = () => setIsMobile(!isMobile);
-
   const handleClose = () => setIsMobile(false);
 
+  // Redirect non-admin users to admin login page
   if (!isAdmin) return <Navigate to="/admin" />;
 
   return (
     <Grid container minHeight={"100vh"}>
+      {/* Mobile menu toggle button */}
       <Box
         sx={{
           display: { xs: "block", md: "none" },
@@ -128,10 +170,12 @@ const AdminLayout = ({ children }) => {
         </IconButton>
       </Box>
 
+      {/* Desktop sidebar */}
       <Grid item md={4} lg={3} sx={{ display: { xs: "none", md: "block" } }}>
         <Sidebar />
       </Grid>
 
+      {/* Main admin content area */}
       <Grid
         item
         xs={12}
@@ -144,6 +188,7 @@ const AdminLayout = ({ children }) => {
         {children}
       </Grid>
 
+      {/* Mobile sidebar drawer */}
       <Drawer open={isMobile} onClose={handleClose}>
         <Sidebar w="50vw" />
       </Drawer>
