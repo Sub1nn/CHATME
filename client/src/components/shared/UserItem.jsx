@@ -1,8 +1,41 @@
+/**
+ * UserItem.jsx
+ *
+ * Reusable list item component for displaying a single user.
+ *
+ * Common use cases:
+ *  - Search dialog (adding users)
+ *  - New group creation (selecting/removing members)
+ *  - Friend request / user selection lists
+ *
+ * The component is memoized to avoid unnecessary re-renders
+ * when parent lists update frequently.
+ */
+
+import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
 import { Avatar, IconButton, ListItem, Stack, Typography } from "@mui/material";
 import React, { memo } from "react";
-import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
 
-const UserItem = ({ user, handler, handlerIsLoading, isAdded = false }) => {
+// Utility to normalize / resize avatar image URLs
+import { transformImage } from "../../lib/features";
+
+/**
+ * UserItem
+ *
+ * Props:
+ *  - user: user object containing {_id, name, avatar}
+ *  - handler: callback triggered when add/remove button is clicked
+ *  - handlerIsLoading: disables action button while async operation is in progress
+ *  - isAdded: determines whether the user is already selected/added
+ *  - styling: optional extra styling props spread onto the root Stack
+ */
+const UserItem = ({
+  user,
+  handler,
+  handlerIsLoading,
+  isAdded = false,
+  styling = {},
+}) => {
   const { name, _id, avatar } = user;
 
   return (
@@ -12,23 +45,28 @@ const UserItem = ({ user, handler, handlerIsLoading, isAdded = false }) => {
         alignItems={"center"}
         spacing={"1rem"}
         width={"100%"}
+        {...styling}
       >
-        <Avatar />
+        {/* User avatar */}
+        <Avatar src={transformImage(avatar)} />
+
+        {/* User name with single-line ellipsis overflow handling */}
         <Typography
           variant="body1"
           sx={{
-            flexGrow: 1,
-            textOverflow: "ellipsis",
-            overflow: "hidden",
+            flexGlow: 1,
             display: "-webkit-box",
-            WebkitBoxOrient: "vertical",
             WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
             width: "100%",
           }}
         >
-          {" "}
-          {name}{" "}
+          {name}
         </Typography>
+
+        {/* Add / Remove action button */}
         <IconButton
           size="small"
           sx={{
@@ -41,6 +79,7 @@ const UserItem = ({ user, handler, handlerIsLoading, isAdded = false }) => {
           onClick={() => handler(_id)}
           disabled={handlerIsLoading}
         >
+          {/* Icon switches based on selection state */}
           {isAdded ? <RemoveIcon /> : <AddIcon />}
         </IconButton>
       </Stack>
