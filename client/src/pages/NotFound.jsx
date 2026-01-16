@@ -1,66 +1,42 @@
+/**
+ * NotFound.jsx
+ *
+ * Fallback page rendered for unknown or invalid routes (404).
+ *
+ * Responsibilities:
+ *  - Inform the user that the requested page does not exist
+ *  - Provide a simple navigation link back to the home page
+ *
+ * This page is intentionally minimal and does not depend on
+ * application state or layout wrappers.
+ */
+
 import React from "react";
-import { Box, Typography, Button, Container } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Error as ErrorIcon } from "@mui/icons-material";
+import { Container, Stack, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
 
 const NotFound = () => {
-  const navigate = useNavigate();
-
   return (
-    <Container maxWidth="sm">
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100vh",
-          textAlign: "center",
-        }}
+    <Container maxWidth="lg" sx={{ height: "100vh" }}>
+      <Stack
+        alignItems={"center"}
+        spacing={"2rem"}
+        justifyContent={"center"}
+        height="100%"
       >
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: "6rem",
-            fontWeight: "bold",
-            color: "primary.main",
-            mb: 2,
-          }}
-        >
-          404
-        </Typography>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: "bold",
-            mb: 2,
-          }}
-        >
-          Oops! Page Not Found
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            mb: 4,
-            color: "text.secondary",
-          }}
-        >
-          The page you are looking for might have been removed, had its name
-          changed, or is temporarily unavailable.
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate("/")}
-          sx={{
-            borderRadius: "20px",
-            padding: "10px 30px",
-            fontSize: "1rem",
-            fontWeight: "bold",
-          }}
-        >
-          Go to Homepage
-        </Button>
-      </Box>
+        {/* Large error icon for visual emphasis */}
+        <ErrorIcon sx={{ fontSize: "10rem" }} />
+
+        {/* HTTP status code */}
+        <Typography variant="h1">404</Typography>
+
+        {/* Error description */}
+        <Typography variant="h3">Not Found</Typography>
+
+        {/* Navigation back to a valid route */}
+        <Link to="/">Go back to home</Link>
+      </Stack>
     </Container>
   );
 };
