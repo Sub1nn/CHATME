@@ -1,3 +1,19 @@
+/**
+ * Groups.jsx
+ *
+ * Page component for managing group chats.
+ *
+ * Responsibilities:
+ *  - Display list of groups the user belongs to
+ *  - Show selected group details (name, members)
+ *  - Rename group
+ *  - Add or remove group members
+ *  - Delete group
+ *  - Handle responsive layout (desktop sidebar vs mobile drawer)
+ *
+ * Group selection is driven by the `group` query parameter.
+ */
+
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
@@ -21,13 +37,17 @@ import {
 } from "@mui/material";
 import React, { Suspense, lazy, memo, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+
 import { LayoutLoader } from "../components/layout/Loaders";
 import AvatarCard from "../components/shared/AvatarCard";
 import { Link } from "../components/styles/StyledComponents";
 import { bgGradient, matBlack } from "../constants/color";
+
 import { useDispatch, useSelector } from "react-redux";
 import UserItem from "../components/shared/UserItem";
 import { useAsyncMutation, useErrors } from "../hooks/hook";
+
+// RTK Query hooks for groups and group actions
 import {
   useChatDetailsQuery,
   useDeleteChatMutation,
@@ -35,8 +55,11 @@ import {
   useRemoveGroupMemberMutation,
   useRenameGroupMutation,
 } from "../redux/api/api";
+
+// UI state action for add-member dialog
 import { setIsAddMember } from "../redux/reducers/misc";
 
+// Lazy-loaded dialogs
 const ConfirmDeleteDialog = lazy(() =>
   import("../components/dialogs/ConfirmDeleteDialog")
 );
@@ -45,19 +68,32 @@ const AddMemberDialog = lazy(() =>
 );
 
 const Groups = () => {
+  // Selected group ID from URL query (?group=...)
   const chatId = useSearchParams()[0].get("group");
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // UI state for add-member dialog
   const { isAddMember } = useSelector((state) => state.misc);
 
+  /**
+   * Fetch all groups the user belongs to.
+   */
   const myGroups = useMyGroupsQuery("");
 
+  /**
+   * Fetch details for the selected group.
+   * `populate: true` fetches full member objects.
+   */
   const groupDetails = useChatDetailsQuery(
     { chatId, populate: true },
     { skip: !chatId }
   );
 
+  /**
+   * Mutations for group management actions.
+   */
   const [updateGroup, isLoadingGroupName] = useAsyncMutation(
     useRenameGroupMutation
   );
@@ -70,15 +106,19 @@ const Groups = () => {
     useDeleteChatMutation
   );
 
+  // UI state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
 
+  // Group state
   const [groupName, setGroupName] = useState("");
   const [groupNameUpdatedValue, setGroupNameUpdatedValue] = useState("");
-
   const [members, setMembers] = useState([]);
 
+  /**
+   * Centralized error handling.
+   */
   const errors = [
     {
       isError: myGroups.isError,
@@ -92,6 +132,9 @@ const Groups = () => {
 
   useErrors(errors);
 
+  /**
+   * Sync local state when group details change.
+   */
   useEffect(() => {
     const groupData = groupDetails.data;
     if (groupData) {
@@ -108,16 +151,21 @@ const Groups = () => {
     };
   }, [groupDetails.data]);
 
+  // Navigate back to home
   const navigateBack = () => {
     navigate("/");
   };
 
+  // Toggle mobile drawer
   const handleMobile = () => {
     setIsMobileMenuOpen((prev) => !prev);
   };
 
   const handleMobileClose = () => setIsMobileMenuOpen(false);
 
+  /**
+   * Submit updated group name.
+   */
   const updateGroupName = () => {
     setIsEdit(false);
     updateGroup("Updating Group Name...", {
@@ -138,16 +186,25 @@ const Groups = () => {
     dispatch(setIsAddMember(true));
   };
 
+  /**
+   * Delete group and redirect back to groups page.
+   */
   const deleteHandler = () => {
     deleteGroup("Deleting Group...", chatId);
     closeConfirmDeleteHandler();
     navigate("/groups");
   };
 
+  /**
+   * Remove a member from the group.
+   */
   const removeMemberHandler = (userId) => {
     removeMember("Removing Member...", { chatId, userId });
   };
 
+  /**
+   * Reset state when chatId changes.
+   */
   useEffect(() => {
     if (chatId) {
       setGroupName(`Group Name ${chatId}`);
@@ -161,6 +218,9 @@ const Groups = () => {
     };
   }, [chatId]);
 
+  /**
+   * Top-level icon buttons (mobile menu + back button).
+   */
   const IconBtns = (
     <>
       <Box
@@ -199,6 +259,9 @@ const Groups = () => {
     </>
   );
 
+  /**
+   * Group name section (view/edit mode).
+   */
   const GroupName = (
     <Stack
       direction={"row"}
@@ -231,6 +294,9 @@ const Groups = () => {
     </Stack>
   );
 
+  /**
+   * Action buttons (add member / delete group).
+   */
   const ButtonGroup = (
     <Stack
       direction={{
@@ -267,6 +333,7 @@ const Groups = () => {
     <LayoutLoader />
   ) : (
     <Grid container height={"100vh"}>
+      {/* Desktop groups list */}
       <Grid
         item
         sx={{
@@ -280,6 +347,7 @@ const Groups = () => {
         <GroupsList myGroups={myGroups?.data?.groups} chatId={chatId} />
       </Grid>
 
+      {/* Main group details section */}
       <Grid
         item
         xs={12}
@@ -306,6 +374,7 @@ const Groups = () => {
               Members
             </Typography>
 
+            {/* Members list */}
             <Stack
               maxWidth={"45rem"}
               width={"100%"}
@@ -319,8 +388,6 @@ const Groups = () => {
               height={"50vh"}
               overflow={"auto"}
             >
-              {/* Members */}
-
               {isLoadingRemoveMember ? (
                 <CircularProgress />
               ) : (
@@ -345,12 +412,14 @@ const Groups = () => {
         )}
       </Grid>
 
+      {/* Add member dialog */}
       {isAddMember && (
         <Suspense fallback={<Backdrop open />}>
           <AddMemberDialog chatId={chatId} />
         </Suspense>
       )}
 
+      {/* Confirm delete dialog */}
       {confirmDeleteDialog && (
         <Suspense fallback={<Backdrop open />}>
           <ConfirmDeleteDialog
@@ -361,6 +430,7 @@ const Groups = () => {
         </Suspense>
       )}
 
+      {/* Mobile groups drawer */}
       <Drawer
         sx={{
           display: {
@@ -381,6 +451,11 @@ const Groups = () => {
   );
 };
 
+/**
+ * GroupsList
+ *
+ * Sidebar list of user's groups.
+ */
 const GroupsList = ({ w = "100%", myGroups = [], chatId }) => (
   <Stack
     width={w}
@@ -402,6 +477,11 @@ const GroupsList = ({ w = "100%", myGroups = [], chatId }) => (
   </Stack>
 );
 
+/**
+ * GroupListItem
+ *
+ * Single group row item used in group sidebar.
+ */
 const GroupListItem = memo(({ group, chatId }) => {
   const { name, avatar, _id } = group;
 
