@@ -1,3 +1,23 @@
+/**
+ * Login.jsx
+ *
+ * Authentication page that supports:
+ *  - Login with username + password
+ *  - Sign up with profile fields + avatar upload
+ *
+ * Responsibilities:
+ *  - Maintain local UI state for switching between Login/Sign Up forms
+ *  - Validate inputs (username validator) and file uploads (avatar)
+ *  - Call backend endpoints:
+ *      - POST /api/v1/user/login
+ *      - POST /api/v1/user/new
+ *  - Store authenticated user in Redux (auth slice) after success
+ *  - Provide toast feedback for loading/success/error
+ *
+ * Auth mechanism:
+ *  - Uses cookie-based auth (withCredentials: true) so the browser stores session cookies.
+ */
+
 import { useFileHandler, useInputValidation } from "6pp";
 import { CameraAlt as CameraAltIcon } from "@mui/icons-material";
 import {
@@ -21,20 +41,51 @@ import { userExists } from "../redux/reducers/auth";
 import { usernameValidator } from "../utils/validators";
 
 const Login = () => {
+  /**
+   * isLogin:
+   *  - true  => show Login form
+   *  - false => show Sign Up form
+   */
   const [isLogin, setIsLogin] = useState(true);
+
+  /**
+   * isLoading:
+   *  - disables form submit buttons while an API request is in-flight
+   */
   const [isLoading, setIsLoading] = useState(false);
 
+  // Toggle between Login and Sign Up screens
   const toggleLogin = () => setIsLogin((prev) => !prev);
 
+  /**
+   * Form input state
+   *  - useInputValidation provides { value, changeHandler, error }
+   *  - username field additionally uses a validator for client-side checks
+   */
   const name = useInputValidation("");
   const bio = useInputValidation("");
   const username = useInputValidation("", usernameValidator);
   const password = useInputValidation("");
 
+  /**
+   * Avatar file handler (single file).
+   * Provides:
+   *  - avatar.file: selected File object
+   *  - avatar.preview: browser preview URL
+   *  - avatar.error: validation error message (e.g., file size/type)
+   *  - avatar.changeHandler: onChange handler for <input type="file" />
+   */
   const avatar = useFileHandler("single");
 
+  // Redux dispatcher used to store authenticated user
   const dispatch = useDispatch();
 
+  /**
+   * Login handler
+   *  - Sends username + password JSON payload
+   *  - Backend sets auth cookie (withCredentials required)
+   *  - On success: store user in Redux
+   */
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -42,7 +93,7 @@ const Login = () => {
 
     setIsLoading(true);
     const config = {
-      withCredentials: true,
+      withCredentials: true, // required for cookie-based session
       headers: {
         "Content-Type": "application/json",
       },
@@ -70,6 +121,12 @@ const Login = () => {
     }
   };
 
+  /**
+   * Sign up handler
+   *  - Sends multipart/form-data payload including avatar file
+   *  - Backend creates user and sets auth cookie
+   *  - On success: store user in Redux
+   */
   const handleSignUp = async (e) => {
     e.preventDefault();
 
@@ -84,7 +141,7 @@ const Login = () => {
     formData.append("password", password.value);
 
     const config = {
-      withCredentials: true,
+      withCredentials: true, // required for cookie-based session
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -113,6 +170,7 @@ const Login = () => {
   return (
     <div
       style={{
+        // Background gradient for the full auth page
         backgroundImage: bgGradient,
       }}
     >
@@ -138,6 +196,8 @@ const Login = () => {
           {isLogin ? (
             <>
               <Typography variant="h5">Login</Typography>
+
+              {/* Login form */}
               <form
                 style={{
                   width: "100%",
@@ -183,6 +243,7 @@ const Login = () => {
                   OR
                 </Typography>
 
+                {/* Switch to Sign Up screen */}
                 <Button
                   disabled={isLoading}
                   fullWidth
@@ -196,6 +257,8 @@ const Login = () => {
           ) : (
             <>
               <Typography variant="h5">Sign Up</Typography>
+
+              {/* Sign Up form */}
               <form
                 style={{
                   width: "100%",
@@ -203,6 +266,7 @@ const Login = () => {
                 }}
                 onSubmit={handleSignUp}
               >
+                {/* Avatar upload section */}
                 <Stack position={"relative"} width={"10rem"} margin={"auto"}>
                   <Avatar
                     sx={{
@@ -213,6 +277,7 @@ const Login = () => {
                     src={avatar.preview}
                   />
 
+                  {/* File input is visually hidden; IconButton triggers it via label */}
                   <IconButton
                     sx={{
                       position: "absolute",
@@ -236,6 +301,7 @@ const Login = () => {
                   </IconButton>
                 </Stack>
 
+                {/* Avatar validation error */}
                 {avatar.error && (
                   <Typography
                     m={"1rem auto"}
@@ -267,6 +333,7 @@ const Login = () => {
                   value={bio.value}
                   onChange={bio.changeHandler}
                 />
+
                 <TextField
                   required
                   fullWidth
@@ -277,6 +344,7 @@ const Login = () => {
                   onChange={username.changeHandler}
                 />
 
+                {/* Username validator error */}
                 {username.error && (
                   <Typography color="error" variant="caption">
                     {username.error}
@@ -311,6 +379,7 @@ const Login = () => {
                   OR
                 </Typography>
 
+                {/* Switch back to Login screen */}
                 <Button
                   disabled={isLoading}
                   fullWidth
