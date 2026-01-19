@@ -1,14 +1,34 @@
+/**
+ * MessageManagement.jsx
+ *
+ * Admin page for viewing and auditing all messages in the system.
+ *
+ * Responsibilities:
+ *  - Fetch all messages from an admin-protected endpoint
+ *  - Display messages in a tabular format using the shared Table component
+ *  - Render message attachments with correct previews based on file type
+ *  - Show sender details, chat metadata, and timestamp
+ *
+ * This page is wrapped with AdminLayout to:
+ *  - Enforce admin-only access
+ *  - Provide consistent admin navigation and layout
+ */
+
 import { useFetchData } from "6pp";
 import { Avatar, Box, Stack } from "@mui/material";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../../components/layout/AdminLayout";
-import RenderAttachment from "../../components/shared/RenderAttachment";
+import RenderAttachment from "../../components/shared/RenderContent";
 import Table from "../../components/shared/Table";
 import { server } from "../../constants/config";
 import { useErrors } from "../../hooks/hook";
 import { fileFormat, transformImage } from "../../lib/features";
 
+/**
+ * Column configuration for the messages DataGrid.
+ * Each column defines how a message attribute is displayed.
+ */
 const columns = [
   {
     field: "id",
@@ -21,6 +41,11 @@ const columns = [
     headerName: "Attachments",
     headerClassName: "table-header",
     width: 200,
+    /**
+     * Render message attachments.
+     * Each attachment is rendered using RenderAttachment,
+     * which selects the correct UI based on file type.
+     */
     renderCell: (params) => {
       const { attachments } = params.row;
 
@@ -47,7 +72,6 @@ const columns = [
         : "No Attachments";
     },
   },
-
   {
     field: "content",
     headerName: "Content",
@@ -59,6 +83,9 @@ const columns = [
     headerName: "Sent By",
     headerClassName: "table-header",
     width: 200,
+    /**
+     * Render sender avatar and name.
+     */
     renderCell: (params) => (
       <Stack direction={"row"} spacing={"1rem"} alignItems={"center"}>
         <Avatar alt={params.row.sender.name} src={params.row.sender.avatar} />
@@ -87,11 +114,19 @@ const columns = [
 ];
 
 const MessageManagement = () => {
-  const { loading, data, error } = useFetchData(
-    `${server}/api/v1/admin/messages`,
-    "dashboard-messages"
-  );
+  /**
+   * Fetch all messages using admin API.
+   * credentials: "include" ensures admin session cookies are sent.
+   */
+  const { loading, data, error } = useFetchData({
+    url: `${server}/api/v1/admin/messages`,
+    key: "dashboard-messages",
+    credentials: "include",
+  });
 
+  /**
+   * Centralized error handling for admin message fetch.
+   */
   useErrors([
     {
       isError: error,
@@ -99,8 +134,14 @@ const MessageManagement = () => {
     },
   ]);
 
+  // Rows formatted for DataGrid consumption
   const [rows, setRows] = useState([]);
 
+  /**
+   * Transform backend message data into table-friendly rows.
+   * - Normalizes sender avatar URLs
+   * - Formats timestamps into human-readable form
+   */
   useEffect(() => {
     if (data) {
       setRows(
@@ -112,7 +153,7 @@ const MessageManagement = () => {
             avatar: transformImage(i.sender.avatar, 50),
           },
           createdAt: moment(i.createdAt).format("MMMM Do YYYY, h:mm:ss a"),
-        }))
+        })),
       );
     }
   }, [data]);
