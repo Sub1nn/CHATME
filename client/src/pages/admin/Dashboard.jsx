@@ -1,3 +1,19 @@
+/**
+ * Dashboard.jsx
+ *
+ * Admin dashboard page that provides a high-level overview
+ * of application usage and activity.
+ *
+ * Responsibilities:
+ *  - Fetch global statistics from admin-protected endpoint
+ *  - Display key metrics (users, chats, messages)
+ *  - Visualize trends using charts (line + doughnut)
+ *  - Provide basic admin UI elements such as search bar and notifications icon
+ *
+ * This page is wrapped with AdminLayout to ensure admin-only access
+ * and consistent admin navigation.
+ */
+
 import { useFetchData } from "6pp";
 import {
   AdminPanelSettings as AdminPanelSettingsIcon,
@@ -27,13 +43,22 @@ import { server } from "../../constants/config";
 import { useErrors } from "../../hooks/hook";
 
 const Dashboard = () => {
-  const { loading, data, error } = useFetchData(
-    `${server}/api/v1/admin/stats`,
-    "dashboard-stats"
-  );
+  /**
+   * Fetch aggregated admin statistics.
+   * Requires admin session cookies (credentials included).
+   */
+  const { loading, data, error } = useFetchData({
+    url: `${server}/api/v1/admin/stats`,
+    key: "dashboard-stats",
+    credentials: "include",
+  });
 
+  // Destructure stats object from API response
   const { stats } = data || {};
 
+  /**
+   * Centralized error handling for admin stats fetch.
+   */
   useErrors([
     {
       isError: error,
@@ -41,6 +66,14 @@ const Dashboard = () => {
     },
   ]);
 
+  /**
+   * Top app bar for admin dashboard.
+   * Contains:
+   *  - Admin icon
+   *  - Search field (UI only, not wired to backend)
+   *  - Current date
+   *  - Notifications icon
+   */
   const Appbar = (
     <Paper
       elevation={3}
@@ -50,9 +83,11 @@ const Dashboard = () => {
         <AdminPanelSettingsIcon sx={{ fontSize: "3rem" }} />
 
         <SearchField placeholder="Search..." />
-
         <CurveButton>Search</CurveButton>
+
         <Box flexGrow={1} />
+
+        {/* Current date (hidden on small screens) */}
         <Typography
           display={{
             xs: "none",
@@ -69,6 +104,9 @@ const Dashboard = () => {
     </Paper>
   );
 
+  /**
+   * Summary widgets showing key metrics.
+   */
   const Widgets = (
     <Stack
       direction={{
@@ -102,6 +140,7 @@ const Dashboard = () => {
         <Container component={"main"}>
           {Appbar}
 
+          {/* Charts section */}
           <Stack
             direction={{
               xs: "column",
@@ -115,6 +154,7 @@ const Dashboard = () => {
             }}
             sx={{ gap: "2rem" }}
           >
+            {/* Line chart for recent messages */}
             <Paper
               elevation={3}
               sx={{
@@ -131,6 +171,7 @@ const Dashboard = () => {
               <LineChart value={stats?.messagesChart || []} />
             </Paper>
 
+            {/* Doughnut chart comparing group vs single chats */}
             <Paper
               elevation={3}
               sx={{
@@ -152,6 +193,7 @@ const Dashboard = () => {
                 ]}
               />
 
+              {/* Center overlay icons */}
               <Stack
                 position={"absolute"}
                 direction={"row"}
@@ -174,6 +216,12 @@ const Dashboard = () => {
   );
 };
 
+/**
+ * Widget
+ *
+ * Small reusable card used to display a single metric
+ * (users, chats, messages) on the admin dashboard.
+ */
 const Widget = ({ title, value, Icon }) => (
   <Paper
     elevation={3}
