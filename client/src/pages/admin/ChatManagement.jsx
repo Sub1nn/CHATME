@@ -1,3 +1,24 @@
+/**
+ * ChatManagement.jsx
+ *
+ * Admin page for viewing and monitoring all chats in the system.
+ *
+ * Responsibilities:
+ *  - Fetch all chats from admin-protected endpoint
+ *  - Display chats in a tabular format using reusable Table component
+ *  - Show key metadata per chat:
+ *      - chat ID
+ *      - avatar(s)
+ *      - name
+ *      - group / direct chat flag
+ *      - total members
+ *      - total messages
+ *      - creator details
+ *
+ * This page is wrapped with AdminLayout to enforce admin-only access
+ * and provide consistent admin navigation UI.
+ */
+
 import { useFetchData } from "6pp";
 import { Avatar, Skeleton, Stack } from "@mui/material";
 import React, { useEffect, useState } from "react";
@@ -8,6 +29,10 @@ import { server } from "../../constants/config";
 import { useErrors } from "../../hooks/hook";
 import { transformImage } from "../../lib/features";
 
+/**
+ * Column configuration for the admin chats table.
+ * Uses MUI DataGrid-compatible schema.
+ */
 const columns = [
   {
     field: "id",
@@ -22,14 +47,12 @@ const columns = [
     width: 150,
     renderCell: (params) => <AvatarCard avatar={params.row.avatar} />,
   },
-
   {
     field: "name",
     headerName: "Name",
     headerClassName: "table-header",
     width: 300,
   },
-
   {
     field: "groupChat",
     headerName: "Group",
@@ -72,11 +95,19 @@ const columns = [
 ];
 
 const ChatManagement = () => {
-  const { loading, data, error } = useFetchData(
-    `${server}/api/v1/admin/chats`,
-    "dashboard-chats"
-  );
+  /**
+   * Fetch all chats via admin API.
+   * credentials: "include" ensures admin session cookies are sent.
+   */
+  const { loading, data, error } = useFetchData({
+    url: `${server}/api/v1/admin/chats`,
+    key: "dashboard-chats",
+    credentials: "include",
+  });
 
+  /**
+   * Centralized error handling for failed admin fetch.
+   */
   useErrors([
     {
       isError: error,
@@ -84,8 +115,13 @@ const ChatManagement = () => {
     },
   ]);
 
+  // Rows formatted for DataGrid consumption
   const [rows, setRows] = useState([]);
 
+  /**
+   * Transform backend response into table-friendly rows.
+   * Images are optimized via transformImage helper.
+   */
   useEffect(() => {
     if (data) {
       setRows(
@@ -98,7 +134,7 @@ const ChatManagement = () => {
             name: i.creator.name,
             avatar: transformImage(i.creator.avatar, 50),
           },
-        }))
+        })),
       );
     }
   }, [data]);
