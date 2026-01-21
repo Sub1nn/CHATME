@@ -192,8 +192,9 @@ Server runs on http://localhost:5000
 ## Author
 
 Subin Khatiwada
-Master’s Student – Robotics & Machine Learning
-Lappeenranta University of Technology (LUT)
+
+- Master’s Student – Mechatronics Engineer, Robotics & AIML
+- Lappeenranta University of Technology (LUT)
 
 ### License
 
